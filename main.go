@@ -39,6 +39,7 @@ func (cmds *Commands) registerAll() {
 	cmds.register("login", handlerLogin)
 	cmds.register("register", handlerRegister)
 	cmds.register("reset", handlerReset)
+	cmds.register("users", handlerUsers)
 }
 
 func (cmds *Commands) run(s *State, cmd Command) error {
@@ -94,8 +95,30 @@ func handlerRegister(s *State, cmd Command) error {
 
 func handlerReset(s *State, cmd Command) error {
 	err := s.db.DeleteAllUsers(context.Background())
+	if err != nil {
+		return err
+	}
+
 	fmt.Println("All users have been successfully deleted from the database.")
-	return err
+
+	return nil
+}
+
+func handlerUsers(s *State, cmd Command) error {
+	users, err := s.db.GetAllUsers(context.Background())
+	if err != nil {
+		return err
+	}
+
+	for _, user := range users {
+		fmt.Printf("- %s", user.Name)
+		if (s.cfg.Username == user.Name) {
+			fmt.Printf(" (current)")
+		}
+		fmt.Println()
+	}
+
+	return nil
 }
 
 func main() {

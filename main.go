@@ -4,13 +4,18 @@ import (
 	"fmt"
 	"os"
 	"log"
+	"database/sql"
 
 	"github.com/Ahmed0427/rssy/internal/config"
+	"github.com/Ahmed0427/rssy/internal/database"
 
 	"github.com/joho/godotenv"
+
+	_ "github.com/lib/pq"
 )
 
 type State struct {
+	db  *database.Queries
 	cfg *config.Config
 }
 
@@ -67,7 +72,11 @@ func main() {
 		log.Fatalf("Error reading config: %v", err)
 	}
 
+	db, err := sql.Open("postgres", cfg.ConnStr)
+	dbQueries := database.New(db)
+
 	state := State {
+		db: dbQueries,
 		cfg: &cfg,	
 	}
 

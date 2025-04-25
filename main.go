@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"os"
 	"log"
+	"time"
+	"context"
 	"database/sql"
 
 	"github.com/Ahmed0427/rssy/internal/config"
 	"github.com/Ahmed0427/rssy/internal/database"
 
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 
 	_ "github.com/lib/pq"
@@ -34,6 +37,8 @@ func (cmds *Commands) register(name string, handler func(*State, Command) error)
 
 func (cmds *Commands) registerAll() {
 	cmds.register("login", handlerLogin)
+	cmds.register("register", handlerRegister)
+	cmds.register("reset", handlerReset)
 }
 
 func (cmds *Commands) run(s *State, cmd Command) error {
@@ -53,11 +58,44 @@ func handlerLogin(s *State, cmd Command) error {
 	if len(cmd.args) != 1 {
 		return fmt.Errorf("Error: login command expects <username> argument")
 	}
+
+	_, err := s.db.GetUser(context.Background(), cmd.args[0])
+	if err != nil {
+		return fmt.Errorf("Error: %s is not in the database", cmd.args[0])
+	}
 		
 	s.cfg.Username = cmd.args[0]
 	s.cfg.Write()
 
 	return nil
+}
+
+func handlerRegister(s *State, cmd Command) error {
+	if len(cmd.args) != 1 {
+		return fmt.Errorf("Error: register command expects <username> argument")
+	}
+
+	userParams := database.CreateUserParams {
+		ID: uuid.New(),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		Name: cmd.args[0],
+	}
+	
+	user, err := s.db.CreateUser(context.Background(), userParams)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("User '%s' has been successfully registered.\n", user.Name)
+
+	return nil
+}
+
+func handlerReset(s *State, cmd Command) error {
+	err := s.db.DeleteAllUsers(context.Background())
+	fmt.Println("All users have been successfully deleted from the database.")
+	return err
 }
 
 func main() {

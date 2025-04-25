@@ -41,7 +41,7 @@ func Read() (Config, error) {
 	return config, nil
 }
 
-func Write(config Config) error {
+func (config *Config) Write() error {
 	jsonStr, err := json.MarshalIndent(config, "", "  ")
 	if err != nil {
 		return err

@@ -40,6 +40,7 @@ func (cmds *Commands) registerAll() {
 	cmds.register("register", handlerRegister)
 	cmds.register("reset", handlerReset)
 	cmds.register("users", handlerUsers)
+	cmds.register("help", handlerHelp)
 }
 
 func (cmds *Commands) run(s *State, cmd Command) error {
@@ -100,6 +101,16 @@ func handlerReset(s *State, cmd Command) error {
 	}
 
 	fmt.Println("All users have been successfully deleted from the database.")
+
+	return nil
+}
+
+func handlerHelp(s *State, cmd Command) error {
+	fmt.Println()
+	fmt.Println("help                  -- Display this help message")
+	fmt.Println("login <username>      -- Log in as an existing user")
+	fmt.Println("register <username>   -- Register a new user")
+	fmt.Println("users                 -- List all registered users")
 
 	return nil
 }

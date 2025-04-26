@@ -17,7 +17,7 @@ func handlerLogin(s *State, cmd Command) error {
 		return fmt.Errorf("Error: login command expects <username> argument")
 	}
 
-	_, err := s.db.GetUser(context.Background(), cmd.args[0])
+	_, err := s.db.GetUserByName(context.Background(), cmd.args[0])
 	if err != nil {
 		return fmt.Errorf("Error: %s is not in the database", cmd.args[0])
 	}
@@ -75,6 +75,10 @@ func handlerUsers(s *State, cmd Command) error {
 		fmt.Println()
 	}
 
+	if len(users) == 0 {
+		fmt.Println("No users in the database")
+	}
+
 	return nil
 }
 
@@ -88,14 +92,72 @@ func handlerAggregate(s *State, cmd Command) error {
 		return err
 	}
 
-	fmt.Println("Channel Title:", feed.Channel.Title)
-	fmt.Println("Channel Description:", feed.Channel.Description)
-	fmt.Println("Items:")
+	fmt.Println("===================================")
+	fmt.Printf("Description: %s\n", feed.Channel.Description)
+	fmt.Println("===================================\n")
 
 	for i, item := range feed.Channel.Item {
-		fmt.Printf("\nItem #%d\n", i+1)
-		fmt.Println("Title:", item.Title)
-		fmt.Println("Description:", item.Description)
+		fmt.Printf("Item #%d\n", i+1)
+		fmt.Printf("Title       : %s\n", item.Title)
+		fmt.Printf("Description : %s\n\n", item.Description)
+	}
+
+	return nil
+}
+
+func handlerAddfeed(s *State, cmd Command) error {
+	if len(cmd.args) != 2 {
+		return fmt.Errorf("Error: addfeed command expects <NAME> <URL> arguments")
+	}
+
+	user, err := s.db.GetUserByName(context.Background(), s.cfg.Username)
+	if err != nil {
+		return fmt.Errorf("Error: '%s' is not in the database", s.cfg.Username)
+	}
+
+	feedParams := database.CreateFeedParams {
+		ID       : uuid.New(),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		Name     : cmd.args[0],
+		Url      : cmd.args[1],
+		UserID   : user.ID,
+	}
+
+	feed, err := s.db.CreateFeed(context.Background(), feedParams)
+	if err != nil {
+		fmt.Println("hello")
+		return err
+	}
+
+	fmt.Printf("Feed '%s' has been successfully added.\n", feed.Name)
+
+	return nil
+}
+
+func handlerFeeds(s *State, cmd Command) error {
+	feeds, err := s.db.GetAllFeeds(context.Background())
+	if err != nil {
+		return fmt.Errorf("Error: '%s' is not in the database", s.cfg.Username)
+	}
+
+	for i, feed := range feeds {
+		user, err := s.db.GetUserByID(context.Background(), feed.UserID)
+		if err != nil {
+			return fmt.Errorf (
+				"Error: User Created '%s' Feed is not in the database",
+				feed.Name,
+			)
+		}
+		fmt.Printf("Feed #%d\n", i+1)
+		fmt.Printf("  Name: %s\n  URL: %s\n  Created By: %s\n",
+			feed.Name, feed.Url, user.Name)
+
+		fmt.Println()
+	}
+
+	if len(feeds) == 0 {
+		fmt.Println("No Feeds in the database")
 	}
 
 	return nil
@@ -108,7 +170,8 @@ func handlerHelp(s *State, cmd Command) error {
 	fmt.Println("register <username>   -- Register a new user")
 	fmt.Println("users                 -- List all registered users")
 	fmt.Println("aggregate <URL>       -- fetches updates from the site's RSS feed")
-
+	fmt.Println("addfeed <name> <URL>  -- Add a new feed")
+	fmt.Println("feeds                 -- List all added feeds")
 	return nil
 }
 

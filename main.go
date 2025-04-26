@@ -39,6 +39,8 @@ func (cmds *Commands) registerAll() {
 	cmds.register("users", handlerUsers)
 	cmds.register("help", handlerHelp)
 	cmds.register("aggregate", handlerAggregate)
+	cmds.register("addfeed", handlerAddfeed)
+	cmds.register("feeds", handlerFeeds)
 }
 
 func (cmds *Commands) run(s *State, cmd Command) error {

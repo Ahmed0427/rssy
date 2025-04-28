@@ -155,6 +155,52 @@ func handlerFollow(s *State, cmd Command) error {
 	return nil
 }
 
+func handlerUnfollow (s *State, cmd Command) error {
+	_, err := s.db.GetUserByName(context.Background(), s.cfg.Username)
+	if err != nil {
+		return fmt.Errorf("Error: You have to login first", s.cfg.Username)
+	}
+
+	params := database.DeleteUserFeedByUserAndURLParams{
+		Name: s.cfg.Username,
+		Url: cmd.args[0],
+	}
+
+	err = s.db.DeleteUserFeedByUserAndURL(context.Background(), params)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func handlerFollowing (s *State, cmd Command) error {
+	_, err := s.db.GetUserByName(context.Background(), s.cfg.Username)
+	if err != nil {
+		return fmt.Errorf("Error: You have to login first", s.cfg.Username)
+	}
+
+	userFeeds, err := s.db.GetUserFeedsForUser(
+		context.Background(),
+		s.cfg.Username,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	for _, userFeed := range userFeeds {
+		fmt.Printf(" - %s\n",
+			userFeed.FeedName)
+	}
+
+	if len(userFeeds) == 0 {
+		fmt.Println("You are not following anyone yet.")
+	}
+
+	return nil
+}
+
 func handlerAddfeed(s *State, cmd Command) error {
 	if len(cmd.args) != 2 {
 		return fmt.Errorf("Error: addfeed command expects <username> <URL>")
@@ -214,28 +260,6 @@ func handlerFeeds(s *State, cmd Command) error {
 	return nil
 }
 
-func handlerFollowing (s *State, cmd Command) error {
-	userFeeds, err := s.db.GetUserFeedsForUser(
-		context.Background(),
-		s.cfg.Username,
-	)
-
-	if err != nil {
-		return fmt.Errorf("Error: '%s' is not in the database", s.cfg.Username)
-	}
-
-	for _, userFeed := range userFeeds {
-		fmt.Printf(" - %s\n",
-			userFeed.FeedName)
-	}
-
-	if len(userFeeds) == 0 {
-		fmt.Println("No Feeds in the database")
-	}
-
-	return nil
-}
-
 func handlerHelp(s *State, cmd Command) error {
 	fmt.Println()
 	fmt.Println("help                  -- Display this help message")
@@ -246,7 +270,7 @@ func handlerHelp(s *State, cmd Command) error {
 	fmt.Println("addfeed <name> <URL>  -- Add a new feed")
 	fmt.Println("feeds                 -- List all added feeds")
 	fmt.Println("follow <URL>          -- Follow the site's RSS feed")
+	fmt.Println("unfollow <URL>        -- Unfollow the site's RSS feed")
 	fmt.Println("following             -- List all the feeds the current user follows")
 	return nil
 }
-

@@ -42,6 +42,7 @@ func (cmds *Commands) registerAll() {
 	cmds.register("addfeed", handlerAddfeed)
 	cmds.register("follow", handlerFollow)
 	cmds.register("following", handlerFollowing)
+	cmds.register("unfollow", handlerUnfollow)
 }
 
 func (cmds *Commands) run(s *State, cmd Command) error {

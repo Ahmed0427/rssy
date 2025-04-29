@@ -1,6 +1,6 @@
 #  rssy
 
-**rssy** is a simple command-line RSS Feed Aggregator written in Go that helps you stay on top of your favorite content feeds.
+A simple command-line RSS Feed Aggregator written in Go that helps you stay on top of your favorite content feeds.
 
 ### Features
 

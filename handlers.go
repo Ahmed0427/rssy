@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 	"context"
+	"strconv"
 
 	"github.com/Ahmed0427/rssy/internal/database"
 
@@ -109,17 +110,30 @@ func handlerAggregate(s *State, cmd Command) error {
 	}
 
 	for {
-		feed, err := scrapeFeeds(context.Background(), s)
+		rssFeed, feed, err := scrapeFeeds(context.Background(), s)
 		if err != nil {
 			return err
 		}
 
-		fmt.Println("===================================")
-		fmt.Printf("Channel: %s\n", feed.Channel.Description)
-		fmt.Println("===================================\n")
-
-		for _, item := range feed.Channel.Item {
-			fmt.Printf("Title: %s\n", item.Title)
+		for _, post := range rssFeed.Channel.Item {
+			if post.Title == "" || post.Description == "" {
+				continue
+			}
+			params := database.CreatePostParams{
+				ID: uuid.New(),
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+				Title: post.Title,
+				Url: post.Link,
+				Description: post.Description, 
+				PublishedAt: parseRSSTimeFromat(post.PubDate),
+				FeedID: feed.ID,
+			}
+			post, err := s.db.CreatePost(context.Background(), params)
+			if err != nil {
+				fmt.Println(err)
+			}
+			fmt.Println(post.Title)
 		}
 
 		time.Sleep(timeBetweenRequests)
@@ -135,7 +149,7 @@ func handlerFollow(s *State, cmd Command) error {
 
 	user, err := s.db.GetUserByName(context.Background(), s.cfg.Username)
 	if err != nil {
-		return fmt.Errorf("Error: You have to login first", s.cfg.Username)
+		return fmt.Errorf("Error: You have to login first")
 	}
 
 	feed, err := s.db.GetFeedByURL(context.Background(), cmd.args[0])
@@ -165,7 +179,7 @@ func handlerFollow(s *State, cmd Command) error {
 func handlerUnfollow (s *State, cmd Command) error {
 	_, err := s.db.GetUserByName(context.Background(), s.cfg.Username)
 	if err != nil {
-		return fmt.Errorf("Error: You have to login first", s.cfg.Username)
+		return fmt.Errorf("Error: You have to login first")
 	}
 
 	params := database.DeleteUserFeedByUserAndURLParams{
@@ -184,7 +198,7 @@ func handlerUnfollow (s *State, cmd Command) error {
 func handlerFollowing (s *State, cmd Command) error {
 	_, err := s.db.GetUserByName(context.Background(), s.cfg.Username)
 	if err != nil {
-		return fmt.Errorf("Error: You have to login first", s.cfg.Username)
+		return fmt.Errorf("Error: You have to login first")
 	}
 
 	userFeeds, err := s.db.GetUserFeedsForUser(
@@ -215,7 +229,7 @@ func handlerAddfeed(s *State, cmd Command) error {
 
 	_, err := s.db.GetUserByName(context.Background(), s.cfg.Username)
 	if err != nil {
-		return fmt.Errorf("Error: You have to login first", s.cfg.Username)
+		return fmt.Errorf("Error: You have to login first")
 	}
 
 	feedParams := database.CreateFeedParams {
@@ -267,17 +281,52 @@ func handlerFeeds(s *State, cmd Command) error {
 	return nil
 }
 
+func handlerBrowse(s *State, cmd Command) error {
+	limit := 2
+	var err error
+	if len(cmd.args) >= 1 {
+		limit, err = strconv.Atoi(cmd.args[0])
+		if err != nil {
+			return err
+		}
+	}
+
+	user, err := s.db.GetUserByName(context.Background(), s.cfg.Username)
+	if err != nil {
+		return fmt.Errorf("Error: You have to login first")
+	}
+
+	posts, err := s.db.GetPostsForUser(context.Background(),
+		database.GetPostsForUserParams{
+			UserID: user.ID,
+			Limit: int32(limit),
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	for _, post := range posts {
+		fmt.Println("Title:", post.Title)
+		fmt.Println(post.Description)
+		fmt.Println()
+	}	
+
+	return nil
+}
+
 func handlerHelp(s *State, cmd Command) error {
 	fmt.Println()
-	fmt.Println("help                  -- Display this help message")
-	fmt.Println("login <username>      -- Log in as an existing user")
-	fmt.Println("register <username>   -- Register a new user")
-	fmt.Println("users                 -- List all registered users")
-	fmt.Println("aggregate <URL>       -- fetches updates from the site's RSS feed")
-	fmt.Println("addfeed <name> <URL>  -- Add a new feed")
-	fmt.Println("feeds                 -- List all added feeds")
-	fmt.Println("follow <URL>          -- Follow the site's RSS feed")
-	fmt.Println("unfollow <URL>        -- Unfollow the site's RSS feed")
-	fmt.Println("following             -- List all the feeds the current user follows")
+	fmt.Println("help                           -- Display this help message")
+	fmt.Println("login <username>               -- Log in as an existing user")
+	fmt.Println("register <username>            -- Register a new user")
+	fmt.Println("users                          -- List all registered users")
+	fmt.Println("aggregate <time_between_reqs>  -- Fetch updates from feeds")
+	fmt.Println("addfeed <name> <URL>           -- Add a new RSS feed by name and URL")
+	fmt.Println("feeds                          -- List all added feeds")
+	fmt.Println("follow <URL>                   -- Follow an RSS feed")
+	fmt.Println("unfollow <URL>                 -- Unfollow an RSS feed")
+	fmt.Println("following                      -- List all feeds the current user is following")
+	fmt.Println("browse [limit]                 -- List recent posts (default limit is 2)")
 	return nil
 }

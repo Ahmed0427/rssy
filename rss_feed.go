@@ -28,6 +28,33 @@ type RSSItem struct {
 	PubDate     string `xml:"pubDate"`
 }
 
+func parseRSSTimeFromat(t string) time.Time {	
+	timeLayouts := []string{
+		time.RFC3339,
+		time.RFC3339Nano,
+		time.RFC1123,
+		time.RFC1123Z,
+		time.RFC822,
+		time.RFC822Z,
+		time.ANSIC,
+		time.UnixDate,
+		time.RubyDate,
+		time.Kitchen,
+		time.Stamp,
+		time.StampMilli,
+		time.StampMicro,
+	}
+
+	for _, layout := range timeLayouts {
+		parsedTime, err := time.Parse(layout, t)	
+		if err == nil {
+			return parsedTime
+		}
+	}
+
+	return time.Now()
+}
+
 func fetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", feedURL, nil)
 	if err != nil {
@@ -63,15 +90,15 @@ func fetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
 	return feed, nil
 }
 
-func scrapeFeeds(ctx context.Context, s *State) (*RSSFeed, error) {
+func scrapeFeeds(ctx context.Context, s *State) (*RSSFeed, *database.Feed, error) {
 	feed, err := s.db.GetNextFeedToFetch(ctx)	
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	rssFeed, err := fetchFeed(ctx, feed.Url)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	
 	err = s.db.MarkFeedFetched(ctx, database.MarkFeedFetchedParams{
@@ -83,8 +110,8 @@ func scrapeFeeds(ctx context.Context, s *State) (*RSSFeed, error) {
 		Url: feed.Url,
 	})	
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return rssFeed, nil
+	return rssFeed, &feed, nil
 }

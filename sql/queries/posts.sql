@@ -10,4 +10,5 @@ FROM posts
 INNER JOIN user_feeds
 ON posts.feed_id = user_feeds.feed_id
 WHERE user_feeds.user_id = $1
+ORDER BY posts.published_at
 LIMIT $2;

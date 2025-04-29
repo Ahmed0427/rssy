@@ -3,9 +3,13 @@ package main
 import (
 	"io"
 	"html"
+	"time"
+	"database/sql"
 	"encoding/xml"
 	"context"
 	"net/http"
+
+	"github.com/Ahmed0427/rssy/internal/database"
 )
 
 type RSSFeed struct {
@@ -57,4 +61,30 @@ func fetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
 	}
 
 	return feed, nil
+}
+
+func scrapeFeeds(ctx context.Context, s *State) (*RSSFeed, error) {
+	feed, err := s.db.GetNextFeedToFetch(ctx)	
+	if err != nil {
+		return nil, err
+	}
+
+	rssFeed, err := fetchFeed(ctx, feed.Url)
+	if err != nil {
+		return nil, err
+	}
+	
+	err = s.db.MarkFeedFetched(ctx, database.MarkFeedFetchedParams{
+		UpdatedAt: time.Now(),
+		LastFetchedAt: sql.NullTime{
+			Time: time.Now(),
+			Valid: true,
+		},
+		Url: feed.Url,
+	})	
+	if err != nil {
+		return nil, err
+	}
+
+	return rssFeed, nil
 }

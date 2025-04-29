@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -93,7 +94,7 @@ func (q *Queries) DeleteUserFeedByUserAndURL(ctx context.Context, arg DeleteUser
 
 const getUserFeedsForUser = `-- name: GetUserFeedsForUser :many
 SELECT 
-    user_feeds.id, user_feeds.created_at, user_feeds.updated_at, user_id, feed_id, users.id, users.created_at, users.updated_at, users.name, feeds.id, feeds.created_at, feeds.updated_at, feeds.name, url,
+    user_feeds.id, user_feeds.created_at, user_feeds.updated_at, user_id, feed_id, users.id, users.created_at, users.updated_at, users.name, feeds.id, feeds.created_at, feeds.updated_at, last_fetched_at, feeds.name, url,
     users.name AS user_name,
     feeds.name AS feed_name
 FROM user_feeds
@@ -103,22 +104,23 @@ WHERE users.name = $1
 `
 
 type GetUserFeedsForUserRow struct {
-	ID          uuid.UUID
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	UserID      uuid.UUID
-	FeedID      uuid.UUID
-	ID_2        uuid.UUID
-	CreatedAt_2 time.Time
-	UpdatedAt_2 time.Time
-	Name        string
-	ID_3        uuid.UUID
-	CreatedAt_3 time.Time
-	UpdatedAt_3 time.Time
-	Name_2      string
-	Url         string
-	UserName    string
-	FeedName    string
+	ID            uuid.UUID
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	UserID        uuid.UUID
+	FeedID        uuid.UUID
+	ID_2          uuid.UUID
+	CreatedAt_2   time.Time
+	UpdatedAt_2   time.Time
+	Name          string
+	ID_3          uuid.UUID
+	CreatedAt_3   time.Time
+	UpdatedAt_3   time.Time
+	LastFetchedAt sql.NullTime
+	Name_2        string
+	Url           string
+	UserName      string
+	FeedName      string
 }
 
 func (q *Queries) GetUserFeedsForUser(ctx context.Context, name string) ([]GetUserFeedsForUserRow, error) {
@@ -143,6 +145,7 @@ func (q *Queries) GetUserFeedsForUser(ctx context.Context, name string) ([]GetUs
 			&i.ID_3,
 			&i.CreatedAt_3,
 			&i.UpdatedAt_3,
+			&i.LastFetchedAt,
 			&i.Name_2,
 			&i.Url,
 			&i.UserName,

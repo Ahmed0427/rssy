@@ -100,22 +100,29 @@ func handlerUsers(s *State, cmd Command) error {
 
 func handlerAggregate(s *State, cmd Command) error {
 	if len(cmd.args) != 1 {
-		return fmt.Errorf("Error: aggregate command expects <URL>")
+		return fmt.Errorf("Error: aggregate command expects <time_between_reqs>")
 	}
 
-	feed, err := fetchFeed(context.Background(), cmd.args[0])
+	timeBetweenRequests, err := time.ParseDuration(cmd.args[0])
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("===================================")
-	fmt.Printf("Description: %s\n", feed.Channel.Description)
-	fmt.Println("===================================\n")
+	for {
+		feed, err := scrapeFeeds(context.Background(), s)
+		if err != nil {
+			return err
+		}
 
-	for i, item := range feed.Channel.Item {
-		fmt.Printf("Item #%d\n", i+1)
-		fmt.Printf("Title       : %s\n", item.Title)
-		fmt.Printf("Description : %s\n\n", item.Description)
+		fmt.Println("===================================")
+		fmt.Printf("Channel: %s\n", feed.Channel.Description)
+		fmt.Println("===================================\n")
+
+		for _, item := range feed.Channel.Item {
+			fmt.Printf("Title: %s\n", item.Title)
+		}
+
+		time.Sleep(timeBetweenRequests)
 	}
 
 	return nil

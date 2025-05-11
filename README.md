@@ -1,6 +1,6 @@
 #  rssy
 
-A simple command-line RSS Feed Aggregator written in Go that helps you stay on top of your favorite content feeds.
+**rssy** is a simple command-line RSS Feed Aggregator written in Go that helps you stay on top of your favorite content feeds.
 
 ### Features
 
@@ -15,7 +15,7 @@ A simple command-line RSS Feed Aggregator written in Go that helps you stay on t
 - Go 1.18 or higher
 - PostgreSQL database
 - `goose` for database migrations
-- `sqlc` for type-safe SQL
+- `sqlc` for generating Go code from SQL
 - Linux
 
 ## Installation
@@ -31,13 +31,9 @@ sudo mv rssy /usr/local/bin/ # Add to your PATH
 # Create database
 psql -U postgres -c "CREATE DATABASE rssy;"
 
-# Apply migrations
+# Apply migrations 
 go install github.com/pressly/goose/v3/cmd/goose@latest
 goose -dir sql/schema postgres "postgres://username:password@localhost:5432/rssy" up
-
-# Generate Go code from SQL
-go install github.com/kyleconroy/sqlc/cmd/sqlc@latest
-sqlc generate
 ```
 
 #### Configuration
@@ -87,6 +83,3 @@ rssy aggregate 1m0s  # fetch new content every 1 min and 0 sec
 rssy browse # Browse recent posts (default: 2 posts)
 rssy browse 10  # Show 10 recent posts
 ```
-
-### License
-This project is licensed under the MIT License - see the LICENSE file for details.

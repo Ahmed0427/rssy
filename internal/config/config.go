@@ -1,12 +1,12 @@
 package config
 
 import (
-	"os"
 	"encoding/json"
+	"os"
 )
 
 type Config struct {
-	ConnStr string `json:"conn_str"`
+	ConnStr  string `json:"conn_str"`
 	Username string `json:"username"`
 }
 
@@ -22,7 +22,7 @@ func getConfigFilePath() (string, error) {
 }
 
 func Read() (Config, error) {
-	configFilePath, err := getConfigFilePath()	
+	configFilePath, err := getConfigFilePath()
 	if err != nil {
 		return Config{}, err
 	}
@@ -37,7 +37,7 @@ func Read() (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
-	
+
 	return config, nil
 }
 
@@ -47,7 +47,7 @@ func (config *Config) Write() error {
 		return err
 	}
 
-	configFilePath, err := getConfigFilePath()	
+	configFilePath, err := getConfigFilePath()
 	if err != nil {
 		return err
 	}

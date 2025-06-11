@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
-	"time"
 	"context"
+	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/Ahmed0427/rssy/internal/database"
 
@@ -22,7 +22,7 @@ func handlerLogin(s *State, cmd Command) error {
 	if err != nil {
 		return fmt.Errorf("Error: %s is not in the database", cmd.args[0])
 	}
-		
+
 	s.cfg.Username = cmd.args[0]
 	s.cfg.Write()
 
@@ -36,13 +36,13 @@ func handlerRegister(s *State, cmd Command) error {
 		return fmt.Errorf("Error: register command expects <username>")
 	}
 
-	userParams := database.CreateUserParams {
-		ID: uuid.New(),
+	userParams := database.CreateUserParams{
+		ID:        uuid.New(),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
-		Name: cmd.args[0],
+		Name:      cmd.args[0],
 	}
-	
+
 	user, err := s.db.CreateUser(context.Background(), userParams)
 	if err != nil {
 		return err
@@ -50,7 +50,7 @@ func handlerRegister(s *State, cmd Command) error {
 
 	fmt.Printf("User '%s' has been successfully registered.\n", user.Name)
 
-	err = handlerLogin(s, Command {
+	err = handlerLogin(s, Command{
 		name: "login",
 		args: []string{cmd.args[0]},
 	})
@@ -86,7 +86,7 @@ func handlerUsers(s *State, cmd Command) error {
 
 	for _, user := range users {
 		fmt.Printf("- %s", user.Name)
-		if (s.cfg.Username == user.Name) {
+		if s.cfg.Username == user.Name {
 			fmt.Printf(" (current)")
 		}
 		fmt.Println()
@@ -120,14 +120,14 @@ func handlerAggregate(s *State, cmd Command) error {
 				continue
 			}
 			params := database.CreatePostParams{
-				ID: uuid.New(),
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
-				Title: post.Title,
-				Url: post.Link,
-				Description: post.Description, 
+				ID:          uuid.New(),
+				CreatedAt:   time.Now(),
+				UpdatedAt:   time.Now(),
+				Title:       post.Title,
+				Url:         post.Link,
+				Description: post.Description,
 				PublishedAt: parseRSSTimeFromat(post.PubDate),
-				FeedID: feed.ID,
+				FeedID:      feed.ID,
 			}
 			post, err := s.db.CreatePost(context.Background(), params)
 			if err != nil {
@@ -157,12 +157,12 @@ func handlerFollow(s *State, cmd Command) error {
 		return fmt.Errorf("Error: '%s' is not in the database", cmd.args[0])
 	}
 
-	userFeedParams := database.CreateUserFeedParams {
-		ID       : uuid.New(),
+	userFeedParams := database.CreateUserFeedParams{
+		ID:        uuid.New(),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
-		UserID   : user.ID,
-		FeedID   : feed.ID,
+		UserID:    user.ID,
+		FeedID:    feed.ID,
 	}
 
 	userFeed, err := s.db.CreateUserFeed(context.Background(), userFeedParams)
@@ -176,7 +176,7 @@ func handlerFollow(s *State, cmd Command) error {
 	return nil
 }
 
-func handlerUnfollow (s *State, cmd Command) error {
+func handlerUnfollow(s *State, cmd Command) error {
 	_, err := s.db.GetUserByName(context.Background(), s.cfg.Username)
 	if err != nil {
 		return fmt.Errorf("Error: You have to login first")
@@ -184,7 +184,7 @@ func handlerUnfollow (s *State, cmd Command) error {
 
 	params := database.DeleteUserFeedByUserAndURLParams{
 		Name: s.cfg.Username,
-		Url: cmd.args[0],
+		Url:  cmd.args[0],
 	}
 
 	err = s.db.DeleteUserFeedByUserAndURL(context.Background(), params)
@@ -195,7 +195,7 @@ func handlerUnfollow (s *State, cmd Command) error {
 	return nil
 }
 
-func handlerFollowing (s *State, cmd Command) error {
+func handlerFollowing(s *State, cmd Command) error {
 	_, err := s.db.GetUserByName(context.Background(), s.cfg.Username)
 	if err != nil {
 		return fmt.Errorf("Error: You have to login first")
@@ -232,12 +232,12 @@ func handlerAddfeed(s *State, cmd Command) error {
 		return fmt.Errorf("Error: You have to login first")
 	}
 
-	feedParams := database.CreateFeedParams {
-		ID       : uuid.New(),
+	feedParams := database.CreateFeedParams{
+		ID:        uuid.New(),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
-		Name     : cmd.args[0],
-		Url      : cmd.args[1],
+		Name:      cmd.args[0],
+		Url:       cmd.args[1],
 	}
 
 	feed, err := s.db.CreateFeed(context.Background(), feedParams)
@@ -248,7 +248,7 @@ func handlerAddfeed(s *State, cmd Command) error {
 	fmt.Printf("Feed '%s' has been successfully added by '%s'.\n",
 		feed.Name, s.cfg.Username)
 
-	err = handlerFollow(s, Command {
+	err = handlerFollow(s, Command{
 		name: "follow",
 		args: []string{cmd.args[1]},
 	})
@@ -299,7 +299,7 @@ func handlerBrowse(s *State, cmd Command) error {
 	posts, err := s.db.GetPostsForUser(context.Background(),
 		database.GetPostsForUserParams{
 			UserID: user.ID,
-			Limit: int32(limit),
+			Limit:  int32(limit),
 		},
 	)
 	if err != nil {
@@ -310,7 +310,7 @@ func handlerBrowse(s *State, cmd Command) error {
 		fmt.Println("Title:", post.Title)
 		fmt.Println(post.Description)
 		fmt.Println()
-	}	
+	}
 
 	return nil
 }

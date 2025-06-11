@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
-	"os"
-	"log"
 	"database/sql"
+	"fmt"
+	"log"
+	"os"
 
 	"github.com/Ahmed0427/rssy/internal/config"
 	"github.com/Ahmed0427/rssy/internal/database"
@@ -48,11 +48,11 @@ func (cmds *Commands) registerAll() {
 }
 
 func (cmds *Commands) run(s *State, cmd Command) error {
-	handler, found := cmds.handlersMap[cmd.name]	
+	handler, found := cmds.handlersMap[cmd.name]
 	if !found {
-		return fmt.Errorf("Error: command not found")	
+		return fmt.Errorf("Error: command not found")
 	}
-	err := handler(s, cmd);
+	err := handler(s, cmd)
 	if err != nil {
 		return err
 	}
@@ -64,9 +64,9 @@ func main() {
 	godotenv.Load()
 	portStr := os.Getenv("PORT")
 	if portStr == "" {
-		log.Fatal("PORT is not in the environment")	
+		log.Fatal("PORT is not in the environment")
 	}
-	
+
 	cfg, err := config.Read()
 	if err != nil {
 		log.Fatalf("Error reading config: %v", err)
@@ -75,22 +75,22 @@ func main() {
 	db, err := sql.Open("postgres", cfg.ConnStr)
 	dbQueries := database.New(db)
 
-	state := State {
-		db: dbQueries,
-		cfg: &cfg,	
+	state := State{
+		db:  dbQueries,
+		cfg: &cfg,
 	}
 
-	cmds := Commands {
+	cmds := Commands{
 		handlersMap: make(map[string]func(*State, Command) error),
 	}
 	cmds.registerAll()
-	
+
 	if len(os.Args) < 2 {
 		fmt.Println("Error: not enough arguments were provided.")
 		os.Exit(1)
 	}
 
-	cmd := Command {
+	cmd := Command{
 		name: os.Args[1],
 		args: os.Args[2:],
 	}
@@ -101,4 +101,3 @@ func main() {
 		os.Exit(1)
 	}
 }
-

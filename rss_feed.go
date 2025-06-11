@@ -1,13 +1,13 @@
 package main
 
 import (
-	"io"
-	"html"
-	"time"
+	"context"
 	"database/sql"
 	"encoding/xml"
-	"context"
+	"html"
+	"io"
 	"net/http"
+	"time"
 
 	"github.com/Ahmed0427/rssy/internal/database"
 )
@@ -28,7 +28,7 @@ type RSSItem struct {
 	PubDate     string `xml:"pubDate"`
 }
 
-func parseRSSTimeFromat(t string) time.Time {	
+func parseRSSTimeFromat(t string) time.Time {
 	timeLayouts := []string{
 		time.RFC3339,
 		time.RFC3339Nano,
@@ -46,7 +46,7 @@ func parseRSSTimeFromat(t string) time.Time {
 	}
 
 	for _, layout := range timeLayouts {
-		parsedTime, err := time.Parse(layout, t)	
+		parsedTime, err := time.Parse(layout, t)
 		if err == nil {
 			return parsedTime
 		}
@@ -80,7 +80,7 @@ func fetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
 	feed.Channel.Description = html.UnescapeString(feed.Channel.Description)
 
 	for i := 0; i < len(feed.Channel.Item); i++ {
-		feed.Channel.Item[i].Title = 
+		feed.Channel.Item[i].Title =
 			html.UnescapeString(feed.Channel.Item[i].Title)
 
 		feed.Channel.Item[i].Description =
@@ -91,7 +91,7 @@ func fetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
 }
 
 func scrapeFeeds(ctx context.Context, s *State) (*RSSFeed, *database.Feed, error) {
-	feed, err := s.db.GetNextFeedToFetch(ctx)	
+	feed, err := s.db.GetNextFeedToFetch(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -100,15 +100,15 @@ func scrapeFeeds(ctx context.Context, s *State) (*RSSFeed, *database.Feed, error
 	if err != nil {
 		return nil, nil, err
 	}
-	
+
 	err = s.db.MarkFeedFetched(ctx, database.MarkFeedFetchedParams{
 		UpdatedAt: time.Now(),
 		LastFetchedAt: sql.NullTime{
-			Time: time.Now(),
+			Time:  time.Now(),
 			Valid: true,
 		},
 		Url: feed.Url,
-	})	
+	})
 	if err != nil {
 		return nil, nil, err
 	}
